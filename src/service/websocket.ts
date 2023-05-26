@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { SUCCESS, INFO, WARN, ERROR } from "./console";
+import { SUCCESS, INFO, WARN, ERROR } from "../utils/console";
 import { SocketConnect, SocketMessage } from "../types/websocket";
 
 async function getAllLiveUser(io: any, roomId: string) {

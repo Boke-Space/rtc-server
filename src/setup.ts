@@ -2,7 +2,7 @@ import Koa from 'koa';
 import cors from 'koa-cors'
 
 import { SUCCESS } from './utils/console';
-import { webSocketInit } from './utils/websocket';
+import { webSocketInit } from './service/websocket';
 
 export function setup() {
     const app = new Koa();
