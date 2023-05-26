@@ -18,13 +18,14 @@
                 "src/*"
             ]
         },
-        "outDir": "./dist"
+        "outDir": "./dist",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true
     },
     // ts-node的时候会读取这里的配置
     "ts-node": {
         "compilerOptions": {
-            "esModuleInterop": true, // 支持 CommonJS 和 ES 模块互操作性
-            "moduleResolution": "node" // 模块解析器设置为 node
+            "module": "commonjs" // 指定生成什么模块代码。
         },
         "transpileOnly": true // 只编译，报警告或者错误一样运行
     }

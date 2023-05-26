@@ -2,7 +2,7 @@ import Koa from 'koa';
 import cors from 'koa-cors'
 
 import { SUCCESS } from './utils/console';
-import { webSocketInit } from './service/websocket';
+import { initWebSocket } from './config/websocket';
 
 export function setup() {
     const app = new Koa();
@@ -10,5 +10,5 @@ export function setup() {
     const httpServer = app.listen(3000, () => {
         SUCCESS('Server Listen')
     })
-    webSocketInit(httpServer)
+    initWebSocket(httpServer)
 }
