@@ -1,0 +1,23 @@
+{
+  "name": "live-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch src -e ts,tsx --exec ts-node src/main.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/koa": "^2.13.6",
+    "chalk": "^4.1.2",
+    "http": "0.0.1-security",
+    "koa": "^2.14.2",
+    "koa-cors": "^0.0.16",
+    "nodemon": "^2.0.22",
+    "socket.io": "^4.6.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.4"
+  }
+}
