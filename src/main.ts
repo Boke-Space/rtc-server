@@ -6,8 +6,8 @@ import { setup } from "./setup";
 
 function main() {
     databaseConnect()
-    // initSRS()
-    // initFFmpeg()
+    initSRS()
+    initFFmpeg()
     setup()
 }
 
