@@ -2,6 +2,15 @@ import { Server } from "socket.io";
 import { SUCCESS, INFO, WARN, ERROR } from "../utils/console";
 import { SocketConnect, SocketMessage } from "../types/websocket";
 
+import liveService from '@/service/liveService';
+import { getRepository } from "typeorm";
+import { Live } from "@/model/live";
+
+async function getCurrentRoom(roomId: string) {
+    const liveRepository = getRepository(Live);
+    return await liveRepository.findOne({ where : { roomId } })
+}
+
 async function getAllLiveUser(io: any, roomId: string) {
     const allSocketsMap = await io.in(roomId).fetchSockets();
     return Object.keys(allSocketsMap).map((item) => {
@@ -37,7 +46,9 @@ export function initWebSocket(httpServer) {
             INFO(`用户${socket.id}进入房间${data.roomId}`)
             const info = { username: socket.id, room: data.roomId }
             socket.join(data.roomId);
-            socket.emit(SocketMessage.joined, { data: info });
+            // 获取进入房间的数据
+            const currentRoom = await getCurrentRoom(data.roomId)
+            socket.emit(SocketMessage.joined, { data: currentRoom });
             socket.emit(SocketMessage.roomLiveing, data);
             socket.to(data.roomId).emit(SocketMessage.otherJoin, { data: info });
             const liveUser = await getAllLiveUser(io, data.roomId);

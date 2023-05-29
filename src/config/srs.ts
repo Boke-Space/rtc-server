@@ -36,9 +36,13 @@ export const initSRS = () => {
     -p 1935:1935 -p 5001:8080 -p 1985:1985 -p 8000:8000/udp \
     registry.cn-hangzhou.aliyuncs.com/ossrs/srs:4 \
     objs/srs -c conf/rtc2rtmp.conf`);
+        // execSync(`docker run -d --name srs-docker --rm --env CANDIDATE=127.0.0.1 \
+        // -p 1935:1935 -p 1985:1985 -p 5001:5001 -p 8000:8000/udp \
+        // registry.cn-hangzhou.aliyuncs.com/ossrs/srs:4 \
+        // objs/srs -c conf/rtc2rtmp.conf`);
         SUCCESS('初始化SRS成功！')
     } catch (error) {
-        // console.log(error);
+        console.log(error);
         ERROR('初始化SRS失败！')
     }
 };

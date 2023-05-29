@@ -9,6 +9,10 @@ class LiveService {
         const list = await liveRepository.find()
         return list
     }
+    async getListById(roomId: string) {
+        const list = await liveRepository.findOne({ where : { roomId } })
+        return list
+    }
 }
 
 export default new LiveService();
