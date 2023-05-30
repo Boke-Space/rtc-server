@@ -12,8 +12,8 @@ export function setup() {
     app.use(cors())
     app.use(staticService(path.join(__dirname, 'public')));
     registerRoutes(app)
-    const httpServer = app.listen(3000, () => {
-        SUCCESS('Server Listen')
+    const httpServer = app.listen(3000, '192.168.192.131', () => {
+        SUCCESS('Server 192.168.192.131:3000')
     })
     initWebSocket(httpServer)
 }

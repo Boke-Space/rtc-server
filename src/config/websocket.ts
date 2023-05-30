@@ -2,13 +2,19 @@ import { Server } from "socket.io";
 import { SUCCESS, INFO, WARN, ERROR } from "../utils/console";
 import { SocketConnect, SocketMessage } from "../types/websocket";
 
-import liveService from '@/service/liveService';
 import { getRepository } from "typeorm";
 import { Live } from "@/model/live";
 
+
 async function getCurrentRoom(roomId: string) {
     const liveRepository = getRepository(Live);
-    return await liveRepository.findOne({ where : { roomId } })
+    return await liveRepository.findOne({ where: { roomId } })
+}
+
+function createLive(param: any) {
+    const liveRepository = getRepository(Live);
+    const res = liveRepository.create(param)
+    return liveRepository.save(res)
 }
 
 async function getAllLiveUser(io: any, roomId: string) {
@@ -44,15 +50,30 @@ export function initWebSocket(httpServer) {
         // 收到用户进入房间
         socket.on(SocketMessage.join, async (data: any) => {
             INFO(`用户${socket.id}进入房间${data.roomId}`)
-            const info = { username: socket.id, room: data.roomId }
             socket.join(data.roomId);
-            // 获取进入房间的数据
-            const currentRoom = await getCurrentRoom(data.roomId)
-            socket.emit(SocketMessage.joined, { data: currentRoom });
-            socket.emit(SocketMessage.roomLiveing, data);
-            socket.to(data.roomId).emit(SocketMessage.otherJoin, { data: info });
-            const liveUser = await getAllLiveUser(io, data.roomId);
-            socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
+            if (data.isAdmin) {
+                // 开播
+                console.log('开播', data)
+                const params = {
+                    roomId: data.roomId,
+                    socketId: socket.id,
+                    roomName: data.data.roomName,
+                    streamUrl: data.data.srs?.streamurl,
+                    flvUrl: data.data.srs?.flvurl,
+                }
+                const res = createLive(params)
+                socket.emit(SocketMessage.joined, data);
+            } else {
+                // 进入直播间
+                const info = { username: socket.id, room: data.roomId }
+                // 获取进入房间的数据
+                const currentRoom = await getCurrentRoom(data.roomId)
+                socket.emit(SocketMessage.joined, { data: currentRoom });
+                socket.emit(SocketMessage.roomLiveing, data);
+                socket.to(data.roomId).emit(SocketMessage.otherJoin, { data: info });
+                const liveUser = await getAllLiveUser(io, data.roomId);
+                socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
+            }
         })
 
         // 收到用户获取当前在线用户
