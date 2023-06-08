@@ -1,5 +1,5 @@
 // websocket连接状态
-export enum SocketConnect {
+export enum SocketStatus {
     /** 已连接 */
     connection = 'connection',
     /** 连接中 */
@@ -47,4 +47,5 @@ export enum SocketMessage {
     offer = 'offer',
     answer = 'answer',
     candidate = 'candidate',
+    currentLive = 'currentLive'
 }

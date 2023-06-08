@@ -3,9 +3,11 @@ import { execSync, spawn, spawnSync } from 'child_process';
 import { resolveApp } from '../utils/path';
 import { ERROR, SUCCESS } from '../utils/console';
 
-const localFile = resolveApp('./public/fddm.mp4');
-const remoteFlv = 'rtmp://localhost:1935/live/fddm';
-const flvurl = 'http://localhost:5001/live/fddm.flv';
+const localFile = resolveApp('./public/Audio/SupperMoment.mp4');
+const localFile2 = resolveApp('./public/Audio/MC.mp4');
+const remoteFlv = 'rtmp://192.168.192.131:1935/live/SupperMoment';
+const remoteFlv2 = 'rtmp://192.168.192.131:1935/live/MC';
+const flvurl = 'http://192.168.192.131:5001/live/SupperMoment.flv';
 const streamurl = '';
 
 function ffmpegIsInstalled() {
@@ -26,8 +28,12 @@ export const initFFmpeg = () => {
     }
     try {
         // ffmpeg推流
-        spawn(
+        const ffmpeg = spawn(
             `ffmpeg -hide_banner -stream_loop -1 -re -i ${localFile} -c copy -f flv ${remoteFlv}`,
+            { shell: true }
+        );
+        spawn(
+            `ffmpeg -hide_banner -stream_loop -1 -re -i ${localFile2} -c copy -f flv ${remoteFlv2}`,
             { shell: true }
         );
         // ffmpeg.stdout.on('data', (data) => {

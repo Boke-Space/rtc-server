@@ -1,14 +1,27 @@
 import { Server } from "socket.io";
 import { SUCCESS, INFO, WARN, ERROR } from "../utils/console";
-import { SocketConnect, SocketMessage } from "../types/websocket";
+import { SocketStatus, SocketMessage } from "../types/websocket";
 
-import { getRepository } from "typeorm";
+import { getRepository, getConnection } from "typeorm";
 import { Live } from "@/model/live";
 
+async function getCurrentLive() {
+    const liveRepository = getRepository(Live);
+    return await liveRepository.find()
+}
 
 async function getCurrentRoom(roomId: string) {
     const liveRepository = getRepository(Live);
     return await liveRepository.findOne({ where: { roomId } })
+}
+
+async function stopLive(roomId: string) {
+    await getConnection()
+        .createQueryBuilder()
+        .delete()
+        .from(Live)
+        .where("roomId = :roomId", { roomId })
+        .execute();
 }
 
 function createLive(param: any) {
@@ -45,33 +58,47 @@ export function initWebSocket(httpServer) {
         },
     });
 
-    io.on(SocketConnect.connection, async (socket) => {
+    io.on(SocketStatus.connection, async (socket) => {
         SUCCESS('WebSocket已连接')
+
+        const currentLive = await getCurrentLive()
+        socket.emit('live', currentLive)
+
+        setInterval(async () => {
+            const currentLive = await getCurrentLive()
+            socket.emit('live', currentLive)
+        }, 10000)
+
         // 收到用户进入房间
         socket.on(SocketMessage.join, async (data: any) => {
             INFO(`用户${socket.id}进入房间${data.roomId}`)
             socket.join(data.roomId);
             if (data.isAdmin) {
                 // 开播
-                console.log('开播', data)
+                INFO(`用户${socket.id}在房间${data.roomId}开播`)
                 const params = {
                     roomId: data.roomId,
                     socketId: socket.id,
                     roomName: data.data.roomName,
                     streamUrl: data.data.srs?.streamurl,
                     flvUrl: data.data.srs?.flvurl,
+                    isLive: 1,
                 }
-                const res = createLive(params)
+                // 创建直播间
+                await createLive(params)
+                // 获取当前在直播的房间
+                const currentLive = await getCurrentLive()
+                socket.emit('live', currentLive)
                 socket.emit(SocketMessage.joined, data);
-            } else {
-                // 进入直播间
-                const info = { username: socket.id, room: data.roomId }
-                // 获取进入房间的数据
-                const currentRoom = await getCurrentRoom(data.roomId)
-                socket.emit(SocketMessage.joined, { data: currentRoom });
-                socket.emit(SocketMessage.roomLiveing, data);
-                socket.to(data.roomId).emit(SocketMessage.otherJoin, { data: info });
                 const liveUser = await getAllLiveUser(io, data.roomId);
+                socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
+            } else {
+                const currentRoom = await getCurrentRoom(data.roomId)
+                const liveUser = await getAllLiveUser(io, data.roomId);
+                const info = { username: socket.id, room: data.roomId }
+                socket.emit(SocketMessage.joined, currentRoom);
+                socket.emit(SocketMessage.roomLiveing, liveUser);
+                socket.to(data.roomId).emit(SocketMessage.otherJoin, info);
                 socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
             }
         })
@@ -89,6 +116,8 @@ export function initWebSocket(httpServer) {
             WARN(`用户${socket.id}离开房间${data.roomId}`)
             socket.emit(SocketMessage.leaved, { socketId: socket.id });
             const liveUser = await getAllLiveUser(io, data.roomId);
+            // const currentLive = await getCurrentLive()
+            // socket.to('home').emit('live', currentLive)
             socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
         });
 
@@ -98,17 +127,27 @@ export function initWebSocket(httpServer) {
             socket.to(data.roomId).emit(SocketMessage.message, data);
         });
 
+        // 收到管理员不在直播
+        socket.on(SocketMessage.roomNoLive, async (data) => {
+            console.log('停止直播')
+            const roomId = data.roomId
+            socket.to(roomId).emit(SocketMessage.roomNoLive, data);
+            // stopLive(data.roomId)
+        });
+
         // 收到更新加入信息
         socket.on(SocketMessage.updateJoinInfo, async (data: any) => {
             INFO(`用户${socket.id}更新加入房间${data.roomId}`)
         })
 
         // 断开连接中
-        socket.on(SocketConnect.disconnecting, async (reason) => {
+        socket.on(SocketStatus.disconnecting, async (reason) => {
             WARN(`WebSocket断开连接中`)
             const roomId = getRoomId(socket.rooms.values(), socket.id)
             const liveUser = await getAllLiveUser(io, roomId);
-            socket.to(roomId).emit(SocketMessage.liveUser, liveUser);
+            // // 关闭直播间
+            // await stopLive(roomId)
+            socket.to(roomId).emit(SocketMessage.getLiveUser, liveUser);
             socket.to(roomId).emit(SocketMessage.leave, {
                 socketId: socket.id,
                 roomId
@@ -116,8 +155,8 @@ export function initWebSocket(httpServer) {
         });
 
         // 已断开连接
-        socket.on(SocketConnect.disconnect, async (reason) => {
-            ERROR(`WebSocket已断开连接`)
+        socket.on(SocketStatus.disconnect, async (reason) => {
+            // ERROR(`WebSocket已断开连接`)
         });
     });
 }

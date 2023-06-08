@@ -5,14 +5,17 @@ export class Live {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
-    socketId!: string;
+    @Column({ type: 'tinyint', width: 1 })
+    isLive!: boolean;
 
     @Column({ name: 'room_id' })
     roomId!: string;
 
     @Column({ name: 'room_name' })
     roomName!: string;
+
+    @Column({ name: 'cover_img', nullable: true })
+    coverImg!: string;
     
     @Column({ name: 'stream_url', nullable: true })
     streamUrl!: string;
@@ -23,7 +26,5 @@ export class Live {
     @CreateDateColumn({ name: 'create_time', type: 'timestamp' })
     createTime!: Date;
 
-    @CreateDateColumn({ name: 'delete_time', type: 'timestamp', nullable: true, default: null })
-    deleteTime!: Date;
 
 }

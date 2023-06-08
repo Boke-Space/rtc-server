@@ -1,6 +1,6 @@
 import { Live } from "@/model/live";
 import { ParameterizedContext } from "koa";
-import { getRepository } from "typeorm";
+import { getConnection, getRepository } from "typeorm";
 
 const liveRepository = getRepository(Live);
 
@@ -9,9 +9,18 @@ class LiveService {
         const list = await liveRepository.find()
         return list
     }
-    async getListById(roomId: string) {
-        const list = await liveRepository.findOne({ where : { roomId } })
+    async getOneById(roomId: string) {
+        const list = await liveRepository.findOne({ where: { roomId } })
         return list
+    }
+    async deleteById(roomId: string) {
+        const res = await getConnection()
+            .createQueryBuilder()
+            .delete()
+            .from(Live)
+            .where("roomId = :roomId", { roomId })
+            .execute();
+        return res
     }
 }
 
