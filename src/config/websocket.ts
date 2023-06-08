@@ -130,7 +130,7 @@ export function initWebSocket(httpServer) {
         // 收到用户离开房间
         socket.on(SocketMessage.leave, async (data) => {
             WARN(`用户${socket.id}离开房间${data.roomId}`)
-            socket.leave(data.roomId)
+            // socket.leave(data.roomId)
             socket.emit(SocketMessage.leaved, { socketId: socket.id });
             const liveUser = await getAllLiveUser(io, data.roomId);
             // const currentLive = await getCurrentLive()
@@ -160,7 +160,7 @@ export function initWebSocket(httpServer) {
         socket.on(SocketStatus.disconnecting, async (reason) => {
             WARN(`WebSocket断开连接中`)
             const roomId = getRoomId(socket.rooms.values(), socket.id)
-            socket.leave(roomId)
+            // socket.leave(roomId)
             const liveUser = await getAllLiveUser(io, roomId);
             // // 关闭直播间
             // await stopLive(roomId)
