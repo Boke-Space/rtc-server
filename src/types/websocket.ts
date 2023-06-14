@@ -47,5 +47,9 @@ export enum SocketMessage {
     offer = 'offer',
     answer = 'answer',
     candidate = 'candidate',
-    currentLive = 'currentLive'
+    currentLive = 'currentLive',
+    sharedScreen = 'sharedScreen',
+    getSharedScreen = 'getSharedScreen',
+    pauseScreen = 'pauseScreen',
+    getPauseScreen = 'getPauseScreen',
 }

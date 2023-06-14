@@ -35,7 +35,8 @@ async function getAllLiveUser(io: any, roomId: string) {
     return Object.keys(allSocketsMap).map((item) => {
         return {
             id: allSocketsMap[item].id,
-            rooms: [...allSocketsMap[item].rooms.values()],
+            isOpen: true
+            // rooms: [...allSocketsMap[item].rooms.values()],
         };
     });
 }
@@ -102,22 +103,35 @@ export function initWebSocket(httpServer) {
                 socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
                 //  发起会议
             } else if (data.type === 'meeting') {
-                console.log(data)
                 const liveUser = await getAllLiveUser(io, data.roomId);
                 socket.emit(SocketMessage.joined, { ...data, liveUser });
                 socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
                 //  参与会议
             } else if (data.type === 'attend') {
-                console.log(data)
-                const currentRoom = await getCurrentRoom(data.roomId)
                 const liveUser = await getAllLiveUser(io, data.roomId);
-                const info = { username: socket.id, room: data.roomId }
-                socket.emit(SocketMessage.joined, currentRoom);
+                const info = { username: socket.id, room: data.roomId, liveUser }
+                socket.emit(SocketMessage.joined, { ...data, liveUser });
                 socket.emit(SocketMessage.roomLiveing, liveUser);
                 socket.to(data.roomId).emit(SocketMessage.otherJoin, info);
                 socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
             }
         })
+
+        // 收到用户共享屏幕
+        socket.on(SocketMessage.sharedScreen, async (data) => {
+            INFO(`收到用户共享屏幕`)
+            const liveUser = await getAllLiveUser(io, data.roomId);
+            socket.emit(SocketMessage.getSharedScreen, { ...data, liveUser });
+            socket.to(data.roomId).emit(SocketMessage.getSharedScreen, { ...data, liveUser });
+        });
+
+        // 收到用户共享屏幕
+        socket.on(SocketMessage.pauseScreen, async (data) => {
+            INFO(`收到用户停止屏幕分享`)
+            const liveUser = await getAllLiveUser(io, data.roomId);
+            socket.emit(SocketMessage.getPauseScreen, { ...data, liveUser });        
+            socket.to(data.roomId).emit(SocketMessage.getPauseScreen, { ...data, liveUser });
+        });
 
         // 收到用户获取当前在线用户
         socket.on(SocketMessage.getLiveUser, async (data) => {
@@ -129,10 +143,10 @@ export function initWebSocket(httpServer) {
 
         // 收到用户离开房间
         socket.on(SocketMessage.leave, async (data) => {
-            WARN(`用户${socket.id}离开房间${data.roomId}`)
+            WARN(`用户${socket.id}在房间${data.roomId}`)
             // socket.leave(data.roomId)
-            socket.emit(SocketMessage.leaved, { socketId: socket.id });
             const liveUser = await getAllLiveUser(io, data.roomId);
+            socket.emit(SocketMessage.leaved, { socketId: socket.id, liveUser });
             // const currentLive = await getCurrentLive()
             // socket.to('home').emit('live', currentLive)
             socket.to(data.roomId).emit(SocketMessage.liveUser, liveUser);
